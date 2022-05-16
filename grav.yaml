@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grav
+  labels:
+    app: grav
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grav
+  template:
+    metadata:
+      labels:
+        app: grav
+    spec:
+      containers:
+        - image: docker.io/magecloudworks/grav:latest
+          name: grav
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: grav-persistent-storage
+              mountPath: /var/www/html
+      volumes:
+        - name: grav-persistent-storage
+          persistentVolumeClaim:
+            claimName: grav-volumeclaim
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: grav-volumeclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: grav
+  name: grav
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  selector:
+    app: grav
+---
